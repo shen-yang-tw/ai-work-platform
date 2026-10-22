@@ -1,0 +1,19 @@
+# frontend/.dockerignore
+# 建置上下文排除清單：避免本機依賴、建置產物與機密檔案進入 Docker 映像檔
+
+# 本機安裝的依賴，容器內會重新安裝
+node_modules
+# 本機建置產物，容器內會重新編譯
+.next
+out
+# 機密與環境變數檔，絕不能打包進映像檔
+.env
+.env.*
+# 版本控制與本機日誌
+.git
+.gitignore
+*.log
+coverage
+# Docker 設定檔本身不需要進入建置上下文
+Dockerfile
+.dockerignore

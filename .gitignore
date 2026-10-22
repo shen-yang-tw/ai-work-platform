@@ -1,0 +1,15 @@
+# 機密與本機產物一律不進版本控制
+.env
+.env.*
+!.env.example
+.machine.env
+node_modules/
+.next/
+out/
+__pycache__/
+*.pyc
+.venv/
+ollama-data/
+
+# Supabase CLI 產生的暫存資料
+supabase/.temp/

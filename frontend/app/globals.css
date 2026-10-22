@@ -1,0 +1,28 @@
+/* frontend/app/globals.css */
+/* 匯入 Tailwind CSS v4 的完整樣式（基礎重置、工具類別與主題變數） */
+@import "tailwindcss";
+
+/* 自訂 dark 變體：當 <html> 帶有 .dark class 時，dark: 前綴的樣式才會生效 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 基礎字型：使用系統字型，不載入外部字型檔，避免拖慢 LCP */
+html {
+  font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+/* 所有可操作的按鈕都顯示可點擊游標，停用按鈕則保留原生游標狀態 */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+/* 使用者設定「減少動態效果」時，把動畫與轉場縮到幾乎不可見（WCAG 2.3.3） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

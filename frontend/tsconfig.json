@@ -1,0 +1,48 @@
+// frontend/tsconfig.json
+// TypeScript 設定：開啟嚴格模式，確保型別安全。
+{
+  "compilerOptions": {
+    // 目標語法與瀏覽器函式庫
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2022"
+    ],
+    // 允許混用 JS 與 TS 並讓 Next.js 處理打包
+    "allowJs": true,
+    // 開啟所有嚴格型別檢查
+    "strict": true,
+    // 不輸出 JS，由 Next.js 負責編譯
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    // 把 @/ 對應到專案根目錄，避免長長的相對路徑
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

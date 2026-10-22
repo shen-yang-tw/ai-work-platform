@@ -1,0 +1,23 @@
+# backend/requirements.txt
+# 後端依賴，全部鎖定精確版本，確保每次建置結果一致。
+
+# Web 框架與 ASGI 伺服器
+fastapi==0.156.4
+uvicorn==0.54.0
+# 非同步 HTTP 用戶端，用來呼叫 Gemini 與 Ollama
+httpx==0.28.1
+# 資料模型驗證與設定管理
+pydantic==2.14.1
+pydantic-settings==2.16.1
+# JWT 驗證；cryptography 提供 ES256 與 RS256 的演算法支援
+PyJWT==2.15.1
+cryptography==50.0.2
+# Postgres 驅動與連線池
+psycopg[binary]==3.3.6
+psycopg-pool==3.3.3
+# PDF 文字抽取
+pypdf==6.21.1
+# 解析 multipart/form-data 上傳檔案，FastAPI 上傳功能必需
+python-multipart==0.0.32
+# 簡體轉台灣繁體，修正本機 Ollama 模型混入的簡體字（純 Python，無原生編譯）
+opencc-python-reimplemented==0.1.7

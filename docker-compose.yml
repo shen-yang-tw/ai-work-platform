@@ -1,0 +1,81 @@
+# 獨立的 Docker Compose 設定。Supabase 由 Supabase CLI 在主機上另行啟動（supabase start），
+# 不包在這個檔案內，因此容器內以 host.docker.internal 連回主機的 54421 / 54322 連接埠。
+name: ai-work-platform
+
+services:
+  # 前端：Next.js standalone 模式，只綁定主機的 127.0.0.1，不直接暴露到區網
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # 這兩個值會在建置時寫入前端程式碼（NEXT_PUBLIC_ 前綴的變數是建置期決定的）
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        # 瀏覽器會直接呼叫後端，所以這裡必須是「瀏覽器能連到」的後端網址，而不是容器內部網址
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    # 前端容器不掛載 .env：伺服器金鑰（Gemini、資料庫）不會進入前端容器的環境變數
+    ports:
+      - "127.0.0.1:3000:3000"
+    # 讓容器可以用 host.docker.internal 找到主機（Ubuntu 需要這一行才能解析）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # 後端：FastAPI，只綁定主機的 127.0.0.1，對外由 Cloudflare Tunnel 轉發
+  backend:
+    build:
+      context: ./backend
+    env_file: .env
+    ports:
+      - "127.0.0.1:8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Ollama：本機模型服務，只綁定主機的 127.0.0.1（不對區網開放），讓主機上直接執行的後端也能連到
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      # 模型檔案存在具名磁碟區，重建容器時不需要重新下載
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  # Cloudflare Tunnel：不需要開放路由器連接埠，由 Cloudflare 把網域轉發到內部服務
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    # TUNNEL_TOKEN 來自 Cloudflare Zero Trust 後台，只放在 .env
+    # 只有設定有效的 TUNNEL_TOKEN 時，腳本才會以 tunnel profile 啟動它
+    profiles:
+      - tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  ollama-data:

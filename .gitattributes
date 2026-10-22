@@ -1,0 +1,3 @@
+# 統一使用 LF 換行，避免在 Windows 編輯後，於 Ubuntu 容器或主機執行時出現 \r 錯誤
+* text=auto eol=lf
+*.bat text eol=crlf

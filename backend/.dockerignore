@@ -1,0 +1,20 @@
+# backend/.dockerignore
+# 建置上下文排除清單：機密、快取與本機環境都不得進入映像。
+
+# 環境變數檔可能含有金鑰，絕對不能打包進映像
+.env
+.env.*
+# Python 快取與虛擬環境
+__pycache__/
+*.pyc
+.venv/
+venv/
+# 測試與工具設定
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+# 版本控制與編輯器設定
+.git/
+.vscode/
+.idea/

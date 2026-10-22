@@ -1,0 +1,4 @@
+# frontend/public/robots.txt
+# 個人私用平台，禁止所有搜尋引擎爬取
+User-agent: *
+Disallow: /
