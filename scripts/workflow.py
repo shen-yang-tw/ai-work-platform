@@ -120,6 +120,32 @@ def run_quiet(command: list[str], *, cwd: Path = ROOT) -> None:
         raise WorkflowError(f"指令失敗（退出碼 {result.returncode}）：{command[0]}")
 
 
+def ensure_supabase_started(supabase: str) -> None:
+    """智慧型自我修復的 Supabase 啟動函式，自動清理幽靈容器與 Port 衝突"""
+    print("\n正在啟動本機 Supabase...")
+    
+    # 1. 先嘗試正常停止舊容器釋放 Port
+    subprocess.run([supabase, "stop"], cwd=ROOT, capture_output=True, check=False)
+    
+    # 2. 嘗試啟動
+    result = subprocess.run([supabase, "start"], cwd=ROOT, text=True, check=False)
+    
+    if result.returncode != 0:
+        print("\n[自動修復] 偵測到連接埠佔用或幽靈容器殘留，正在強制清理...")
+        # 強制清理常見的殘留容器
+        subprocess.run(["docker", "rm", "-f", "supabase_db_Work"], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "supabase_db_ai-work-platform"], capture_output=True, check=False)
+        
+        # 再次執行 stop 確保完全釋放
+        subprocess.run([supabase, "stop"], cwd=ROOT, capture_output=True, check=False)
+        
+        print("[自動修復] 正在重新啟動 Supabase...")
+        retry_result = subprocess.run([supabase, "start"], cwd=ROOT, text=True, check=False)
+        if retry_result.returncode != 0:
+            raise WorkflowError("Supabase 啟動失敗。請確認是否仍有其他行程佔用連接埠（如 54322）。")
+    print("本機 Supabase 啟動成功！")
+
+
 def supabase_status(supabase: str) -> dict[str, str]:
     import json
 
@@ -150,7 +176,7 @@ def bootstrap_env(supabase: str) -> None:
         shutil.copyfile(ROOT / ".env.example", env_path)
     current = read_env_file(env_path)
     if current.get("NEXT_PUBLIC_SUPABASE_ANON_KEY", "replace-with-").startswith("replace-with-"):
-        run_quiet([supabase, "start"])
+        ensure_supabase_started(supabase)
         status = supabase_status(supabase)
         api_url = status["API_URL"].rstrip("/")
         port = api_url.rsplit(":", 1)[-1]
@@ -214,9 +240,20 @@ def npm_command(script: str, subcommand: str | None = "run") -> list[str]:
 
 
 def start_development(supabase: str) -> None:
-    print("\n啟動本機 Supabase（CLI 輸出隱藏，以免顯示本機金鑰）...")
-    run_quiet([supabase, "start"])
+    ensure_supabase_started(supabase)
     run(["docker", "compose", *DEV_COMPOSE, "up", "-d", "--build"])
+    
+    # 自動檢查與下載 Ollama 模型，確保開發模式下 Ollama 模型隨時可用
+    model = read_env_file(ROOT / ".env").get("OLLAMA_CHAT_MODEL", "qwen2.5:3b")
+    print(f"\n正在檢查並自動拉取 Ollama 模型 ({model})...")
+    import time
+    time.sleep(3)  # 給容器幾秒鐘初始化
+    subprocess.run(
+        ["docker", "compose", *DEV_COMPOSE, "exec", "-T", "ollama", "ollama", "pull", model],
+        cwd=ROOT,
+        check=False
+    )
+    
     print("\n開發服務已啟動：")
     print("  前端：  http://127.0.0.1:3000")
     print("  後端：  http://127.0.0.1:8000/api/health")
@@ -277,7 +314,7 @@ def wait_for_http(url: str, attempts: int = 30) -> None:
 
 
 def deploy_local(supabase: str) -> None:
-    run_quiet([supabase, "start"])
+    ensure_supabase_started(supabase)
     token = read_env_file(ROOT / ".env").get("TUNNEL_TOKEN", "")
     profile = [] if not token or token.startswith("replace-with-") else ["--profile", "tunnel"]
     run(["docker", "compose", *profile, "up", "-d", "--build", "--wait"])

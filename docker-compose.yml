@@ -13,6 +13,7 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         # 瀏覽器會直接呼叫後端，所以這裡必須是「瀏覽器能連到」的後端網址，而不是容器內部網址
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    # user: "${UID:-1000}:${GID:-1000}"   # 👈 把這行刪除或註解掉！   # 👈 加上這行！強制對應本機使用者
     # 前端容器不掛載 .env：伺服器金鑰（Gemini、資料庫）不會進入前端容器的環境變數
     ports:
       - "127.0.0.1:3000:3000"
@@ -32,6 +33,7 @@ services:
   backend:
     build:
       context: ./backend
+    # user: "${UID:-1000}:${GID:-1000}"   # 👈 把這行刪除或註解掉！   # 👈 加上這行！強制對應本機使用者
     env_file: .env
     ports:
       - "127.0.0.1:8000:8000"

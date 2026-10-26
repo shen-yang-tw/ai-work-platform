@@ -11,6 +11,7 @@ services:
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    # user: "${UID:-1000}:${GID:-1000}"   # 👈 把這行刪除或註解掉！   # 👈 加上這行！強制對應本機使用者
     volumes:
       - ./frontend:/app
       - frontend-node-modules:/app/node_modules
@@ -21,6 +22,7 @@ services:
     build:
       target: development
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--no-server-header"]
+    # user: "${UID:-1000}:${GID:-1000}"   # 👈 把這行刪除或註解掉！   # 👈 加上這行！強制對應本機使用者
     volumes:
       - ./backend/app:/app/app
     read_only: false
